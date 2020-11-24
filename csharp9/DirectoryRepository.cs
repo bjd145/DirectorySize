@@ -53,10 +53,10 @@ namespace DirectorySize
         }
 
         public void Print(bool showErrors, bool quiet){
-            DirectoryOutput.DisplayResults(_repository, total_count, total_size, runtime, _errors.Count(), quiet);
+            DirectoryOutput.DisplayResults(_repository, total_count, total_size, runtime, _errors.Count());
 
             if(showErrors)
-                DirectoryOutput.DisplayErrors(_errors, quiet);
+                DirectoryOutput.DisplayErrors(_errors);
         }
 
         private void reportProgress(int completed, int total) 

@@ -2,63 +2,73 @@ using System;
 using System.Linq;
 using System.Collections.Generic;
 using System.Collections.Concurrent;
+using Spectre.Console;
 
 namespace DirectorySize
 {
     static class DirectoryOutput
     {
         const int MB = 1048576;
-        const int PADDING = 50;
         const int MAXCHAR = 45;
 
         static private string Truncate(string value, int maxChars) => value.Length <= maxChars ? value : "..." + value.Substring((value.Length-maxChars), maxChars);
-        static private void   writeDisplayHeader() => Console.WriteLine($"{"Directory:",-PADDING} {"Number of Files:",PADDING} {"Size (MB):",PADDING}");
-        static private void   writeErrorHeader()   => Console.WriteLine($"{"Directory:",-PADDING} {"Error:",PADDING}");
+        static private string ToMB(long size) => (Math.Round((double)size/MB,2)).ToString();
 
-        static private bool pause(int currentLine, bool quiet)
+        static public void DisplayResults( ConcurrentDictionary<string,DirectoryStatistics> repo, long count, long size, long time, int errors) 
         {
-            if( !quiet && currentLine == Console.WindowHeight - (Console.WindowHeight/2) ) 
-            {
-                Console.WriteLine("Press Enter to Continue");
-                Console.ReadKey(true);
-                return true;
-            }
-            return false;
-        }
-
-        static public void DisplayResults( ConcurrentDictionary<string,DirectoryStatistics> repo, long count, long size, long time, int errors, bool quiet) 
-        {
-            Console.WriteLine(Environment.NewLine);
+            var resultsTable = new Table()
+                .Centered()
+                .Width(Console.WindowWidth)
+                .Border(TableBorder.Rounded)
+                .AddColumn(new TableColumn("Path").LeftAligned().Footer("Totals").NoWrap())
+                .AddColumn(new TableColumn("Files").RightAligned().Footer(new Text(count.ToString())))
+                .AddColumn(new TableColumn("Size (mb)").RightAligned().Footer(new Text(ToMB(size).ToString())));
         
-            int c = 0;
             foreach (var directory in repo.OrderByDescending( o => o.Value.DirectorySize))
             {
-                if( c == 0 ) 
-                    writeDisplayHeader();
-                Console.WriteLine($"{(Truncate(directory.Value.Path,MAXCHAR)), -PADDING} {directory.Value.FileCount,PADDING:n0} {((double)directory.Value.DirectorySize/MB),PADDING:n2}" );
-                c = pause(c, quiet) ? 0 : (c+1);                
+                resultsTable.AddRow( 
+                    new Text(directory.Value.Path), 
+                    new Text(directory.Value.FileCount.ToString()), 
+                    new Text(ToMB(directory.Value.DirectorySize))
+                );
             }
+            AnsiConsole.Render(resultsTable);
 
-            Console.WriteLine();
-            Console.WriteLine($"{"Totals:", -PADDING} {count,PADDING:n0} {((double) size / MB),PADDING:n2}");
-            Console.WriteLine($"{"Total Time Taken (ms):", -PADDING} {time,PADDING:n0}");
-            Console.WriteLine($"{"Total Errors:", -PADDING} {errors, PADDING:n0}");
+            var statsTable = new Table()
+                .LeftAligned()
+                .Border(TableBorder.Rounded)
+                .AddColumn(new TableColumn("Stats").LeftAligned())
+                .AddColumn(new TableColumn("Data").RightAligned());
+            
+            statsTable.AddRow(
+                new Text("Time Taken (ms)"),
+                new Text(time.ToString())
+            );
+
+            statsTable.AddRow(
+                new Text("Errors"),
+                new Text(errors.ToString())
+            );
+            AnsiConsole.Render(statsTable);
         }
 
-        static public void DisplayErrors( List<DirectoryErrorInfo> errors, bool quiet) 
+        static public void DisplayErrors( List<DirectoryErrorInfo> errors) 
         {               
-            Console.WriteLine(Environment.NewLine);
+            var errorTable = new Table()
+                .Centered()
+                .Width(Console.WindowWidth)
+                .Border(TableBorder.Rounded)
+                .AddColumn(new TableColumn("Path").LeftAligned().NoWrap())
+                .AddColumn(new TableColumn("Error Details").LeftAligned());
 
-            int c = 0;
-            foreach( var error in errors ) 
+            foreach (var error in errors)
             {
-                if( c == 0 ) 
-                    writeErrorHeader();
-                Console.WriteLine($"{(Truncate(error.Path, MAXCHAR)), -(PADDING+44)} {error.ErrorDescription}");                     
-                c = pause(c, quiet) ? 0 : (c+1);
+                errorTable.AddRow( 
+                    new Text(error.Path), 
+                    new Text(error.ErrorDescription) 
+                );
             }
-            Console.WriteLine();
+            AnsiConsole.Render(errorTable);
         }
-
     }
 }
