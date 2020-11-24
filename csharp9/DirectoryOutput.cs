@@ -11,8 +11,8 @@ namespace DirectorySize
         const int MB = 1048576;
         const int MAXCHAR = 45;
 
-        static private string Truncate(string value, int maxChars) => value.Length <= maxChars ? value : "..." + value.Substring((value.Length-maxChars), maxChars);
-        static private string ToMB(long size) => (Math.Round((double)size/MB,2)).ToString();
+        static private string ToNumberFormat(long val) => string.Format("{0:#,0}", val);
+        static private string ToMB(long val) => (string.Format("{0:#,0.00}", Math.Round((double)val/MB,2)));
 
         static public void DisplayResults( ConcurrentDictionary<string,DirectoryStatistics> repo, long count, long size, long time, int errors) 
         {
@@ -21,14 +21,14 @@ namespace DirectorySize
                 .Width(Console.WindowWidth)
                 .Border(TableBorder.Rounded)
                 .AddColumn(new TableColumn("Path").LeftAligned().Footer("Totals").NoWrap())
-                .AddColumn(new TableColumn("Files").RightAligned().Footer(new Text(count.ToString())))
-                .AddColumn(new TableColumn("Size (mb)").RightAligned().Footer(new Text(ToMB(size).ToString())));
+                .AddColumn(new TableColumn("Files").RightAligned().Footer(new Text(ToNumberFormat(count))))
+                .AddColumn(new TableColumn("Size (mb)").RightAligned().Footer(new Text(ToMB(size))));
         
             foreach (var directory in repo.OrderByDescending( o => o.Value.DirectorySize))
             {
                 resultsTable.AddRow( 
                     new Text(directory.Value.Path), 
-                    new Text(directory.Value.FileCount.ToString()), 
+                    new Text(ToNumberFormat(directory.Value.FileCount)), 
                     new Text(ToMB(directory.Value.DirectorySize))
                 );
             }
@@ -42,7 +42,7 @@ namespace DirectorySize
             
             statsTable.AddRow(
                 new Text("Time Taken (ms)"),
-                new Text(time.ToString())
+                new Text(ToNumberFormat(time))
             );
 
             statsTable.AddRow(

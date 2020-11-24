@@ -52,7 +52,8 @@ namespace DirectorySize
             runtime = watch.ElapsedMilliseconds;
         }
 
-        public void Print(bool showErrors, bool quiet){
+        public void Print(bool showErrors, bool quiet)
+        {
             DirectoryOutput.DisplayResults(_repository, total_count, total_size, runtime, _errors.Count());
 
             if(showErrors)
