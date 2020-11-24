@@ -14,7 +14,7 @@ namespace DirectorySize
         static private string ToNumberFormat(long val) => string.Format("{0:#,0}", val);
         static private string ToMB(long val) => (string.Format("{0:#,0.00}", Math.Round((double)val/MB,2)));
 
-        static public void DisplayResults( ConcurrentDictionary<string,DirectoryStatistics> repo, long count, long size, long time, int errors) 
+        static public void DisplayResults( ConcurrentDictionary<string,DirectoryStatistics> repo, long size, long count, long time, int errors) 
         {
             var resultsTable = new Table()
                 .Centered()

@@ -32,13 +32,13 @@ namespace DirectorySize
             var watch = System.Diagnostics.Stopwatch.StartNew();
 
             int totalSubDirectories = Directory.EnumerateDirectories(_rootPath).Count();
-            (total_size, total_count) = getCurrentDirectoryFileSize(_rootPath);
+            (total_count, total_size) = getCurrentDirectoryFileSize(_rootPath);
 
             _repository.TryAdd<string, DirectoryStatistics>(_rootPath, new( _rootPath, total_size, total_count ));
                         
             Parallel.ForEach( Directory.EnumerateDirectories(_rootPath), async (subdirectory) => {
                 
-                (long size, long count) = await getDirectorySize(subdirectory);
+                (long count, long size) = await getDirectorySize(subdirectory);
                 _repository.TryAdd<string, DirectoryStatistics>(subdirectory,new( subdirectory, size, count ));
                 
                 lock (_repository)
@@ -54,7 +54,7 @@ namespace DirectorySize
 
         public void Print(bool showErrors, bool quiet)
         {
-            DirectoryOutput.DisplayResults(_repository, total_count, total_size, runtime, _errors.Count());
+            DirectoryOutput.DisplayResults(_repository, total_size, total_count, runtime, _errors.Count());
 
             if(showErrors)
                 DirectoryOutput.DisplayErrors(_errors);
@@ -82,7 +82,7 @@ namespace DirectorySize
                 
                 foreach (var subdirectory in Directory.EnumerateDirectories(path)) 
                 {
-                    (long size, long count) = await getDirectorySize(subdirectory);
+                    (long count, long size) = await getDirectorySize(subdirectory);
                     directory_size += size; number_of_files += count;
                 }
             }
@@ -93,7 +93,7 @@ namespace DirectorySize
                     _errors.Add(new DirectoryErrorInfo(){ Path = path, ErrorDescription = e.Message.ToString() });
                 }
             }
-            return (directory_size,number_of_files);
+            return (number_of_files,directory_size);
         }
     }
 }
